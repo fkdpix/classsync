@@ -5,7 +5,7 @@ import PlanCreator from './components/PlanCreator';
 import PlanDashboard from './components/PlanDashboard';
 import StudentList from './components/StudentList';
 import SyncModal from './components/SyncModal';
-import { CalendarRange, ChevronLeft, Cloud, RefreshCw, AlertCircle, Check } from 'lucide-react';
+import { CalendarRange, ChevronLeft, Cloud, RefreshCw, AlertCircle, Check, Trash2, AlertTriangle, X } from 'lucide-react';
 import { getSyncConfig, pullFromCloud, pushToCloud } from './services/db';
 import { format } from 'date-fns';
 
@@ -16,6 +16,9 @@ const App: React.FC = () => {
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'local' | 'syncing' | 'synced' | 'error'>('local');
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  
+  // Estado para controle da exclusão customizada
+  const [planToDelete, setPlanToDelete] = useState<Plan | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,7 +53,7 @@ const App: React.FC = () => {
     localStorage.setItem('class_sync_plans', JSON.stringify(plans));
     
     const config = getSyncConfig();
-    if (config && plans.length > 0) {
+    if (config) {
       setSyncStatus('syncing');
       const timer = setTimeout(async () => {
         try {
@@ -59,7 +62,6 @@ const App: React.FC = () => {
           setLastSyncTime(format(new Date(), 'HH:mm:ss'));
         } catch (e) {
           setSyncStatus('error');
-          console.error("Sync error:", e);
         }
       }, 1000); 
       return () => clearTimeout(timer);
@@ -74,11 +76,24 @@ const App: React.FC = () => {
     setSelectedPlanId(newPlan.id);
   };
 
-  const handleDeletePlan = (id: string) => {
-    if (confirm("Deseja realmente excluir este aluno e todo o seu histórico?")) {
-      setPlans(prev => prev.filter(p => p.id !== id));
-      if (selectedPlanId === id) setSelectedPlanId(null);
+  const initiateDelete = (id: string) => {
+    const plan = plans.find(p => p.id === id);
+    if (plan) {
+      setPlanToDelete(plan);
     }
+  };
+
+  const confirmDelete = () => {
+    if (!planToDelete) return;
+    
+    const id = planToDelete.id;
+    setPlans(prev => prev.filter(p => p.id !== id));
+    
+    if (selectedPlanId === id) {
+      setSelectedPlanId(null);
+    }
+    
+    setPlanToDelete(null);
   };
 
   const handleUpdateHistory = (record: AttendanceRecord) => {
@@ -181,7 +196,7 @@ const App: React.FC = () => {
               plan={activePlan} 
               onUpdateHistory={handleUpdateHistory} 
               onUpdatePlan={handleUpdatePlan}
-              onDeletePlan={handleDeletePlan}
+              onDeletePlan={initiateDelete}
             />
           </div>
         ) : (
@@ -189,7 +204,7 @@ const App: React.FC = () => {
             <StudentList 
               plans={plans} 
               onSelect={(p) => setSelectedPlanId(p.id)} 
-              onDelete={handleDeletePlan}
+              onDelete={initiateDelete}
               onAddClick={() => setIsCreating(true)}
             />
           </div>
@@ -202,6 +217,7 @@ const App: React.FC = () => {
         </p>
       </footer>
 
+      {/* Modal de Sincronização */}
       <SyncModal 
         isOpen={isSyncModalOpen} 
         onClose={() => setIsSyncModalOpen(false)} 
@@ -209,6 +225,39 @@ const App: React.FC = () => {
           triggerManualRefresh();
         }}
       />
+
+      {/* Modal de Confirmação de Exclusão Customizado */}
+      {planToDelete && (
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4 no-print animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border-t-8 border-rose-500">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center animate-pulse">
+                <AlertTriangle size={32} />
+              </div>
+            </div>
+            
+            <h3 className="text-xl font-black text-slate-900 text-center uppercase tracking-tighter mb-2">Excluir Registro?</h3>
+            <p className="text-slate-600 text-sm text-center font-bold mb-8">
+              Você está prestes a apagar permanentemente o histórico de <span className="text-rose-600 font-black">{planToDelete.studentName}</span>. Esta ação não pode ser desfeita.
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={confirmDelete}
+                className="w-full py-4 bg-rose-600 text-white rounded-2xl font-black shadow-lg hover:bg-rose-700 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2"
+              >
+                <Trash2 size={16} /> Confirmar Exclusão
+              </button>
+              <button 
+                onClick={() => setPlanToDelete(null)}
+                className="w-full py-4 bg-slate-100 text-slate-500 rounded-2xl font-black hover:bg-slate-200 transition-all uppercase text-xs tracking-widest"
+              >
+                Manter Aluno
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
