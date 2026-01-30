@@ -1,10 +1,9 @@
 
 import React, { useRef } from 'react';
-import { X, Printer, Calendar, CheckCircle2, XCircle, FileText, Copy, Info, Ban, RefreshCw, MoveRight } from 'lucide-react';
+import { X, Calendar, CheckCircle2, XCircle, FileText, Copy, Info, Ban, RefreshCw } from 'lucide-react';
 import { Plan, AttendanceRecord } from '../types';
 import { format, parseISO } from 'date-fns';
-// Fix: Import ptBR from specific subpath
-import { ptBR } from 'date-fns/locale/pt-BR';
+import { ptBR } from 'date-fns/locale';
 import { calculatePlanMetrics } from '../utils/dateHelpers';
 
 interface Props {
@@ -26,26 +25,18 @@ const ReportModal: React.FC<Props> = ({ plan, isOpen, onClose }) => {
 
   // Agrupar histórico por mês e depois por status
   const groupedHistory = plan.history.reduce((acc, record) => {
-    const monthYear = format(parseISO(record.date), 'MMMM yyyy', { locale: ptBR });
-    if (!acc[monthYear]) {
-      acc[monthYear] = { attended: [], cancelled: [] };
+    try {
+      const monthYear = format(parseISO(record.date), 'MMMM yyyy', { locale: ptBR });
+      if (!acc[monthYear]) {
+        acc[monthYear] = { attended: [], cancelled: [] };
+      }
+      if (record.status === 'attended') acc[monthYear].attended.push(record);
+      if (record.status === 'cancelled') acc[monthYear].cancelled.push(record);
+    } catch (e) {
+      console.warn("Erro ao processar data no relatório:", record.date);
     }
-    if (record.status === 'attended') acc[monthYear].attended.push(record);
-    if (record.status === 'cancelled') acc[monthYear].cancelled.push(record);
     return acc;
   }, {} as Record<string, GroupedMonth>);
-
-  const handlePrint = () => {
-    // Adiciona classe ao body para o CSS de impressão agir
-    document.body.classList.add('is-printing');
-    
-    // Pequeno delay para garantir que o DOM está pronto e o layout ajustado para impressão
-    setTimeout(() => {
-      window.print();
-      // Remove a classe após a abertura do diálogo de impressão
-      document.body.classList.remove('is-printing');
-    }, 150);
-  };
 
   const copyToClipboard = () => {
     const historyEntries = Object.entries(groupedHistory) as [string, GroupedMonth][];
@@ -78,11 +69,11 @@ _Gerado automaticamente pelo ClassSync_
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[150] flex items-center justify-center p-0 sm:p-4 print:p-0 print:bg-white print:static print-container">
-      <div className="bg-white rounded-none sm:rounded-3xl w-full max-w-2xl h-full sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl print:shadow-none print:h-auto print:rounded-none">
+    <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[150] flex items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-none sm:rounded-3xl w-full max-w-2xl h-full sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         
-        {/* Header - Hidden on Print */}
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center no-print bg-white sticky top-0 z-10">
+        {/* Header */}
+        <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-white sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-600 text-white rounded-lg">
               <FileText size={20} />
@@ -95,7 +86,7 @@ _Gerado automaticamente pelo ClassSync_
         </div>
 
         {/* Content Area */}
-        <div ref={reportRef} className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-8 print:overflow-visible print:p-0">
+        <div ref={reportRef} className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-8">
           
           {/* Main Stats Header */}
           <div className="text-center space-y-3 border-b-4 border-slate-900 pb-8">
@@ -126,9 +117,6 @@ _Gerado automaticamente pelo ClassSync_
               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Término Projetado</p>
               <div className="flex flex-col items-end">
                 <div className="flex items-center justify-end gap-2">
-                  {metrics.currentEndDate.getTime() > metrics.originalEndDate.getTime() && (
-                    <RefreshCw size={14} className="text-indigo-400 animate-spin-slow" />
-                  )}
                   <p className="text-sm font-black text-indigo-700">
                     {format(metrics.currentEndDate, "dd/MM/yyyy", { locale: ptBR })}
                   </p>
@@ -227,19 +215,15 @@ _Gerado automaticamente pelo ClassSync_
               </p>
             </div>
           </div>
-
-          <div className="pt-8 text-center border-t border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] print:block">
-            ClassSync • Sistema de Gestão de Aulas
-          </div>
         </div>
 
-        {/* Footer Actions - Hidden on Print */}
-        <div className="p-6 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row gap-3 no-print">
-          <button onClick={copyToClipboard} className="flex-1 bg-white border-2 border-slate-200 text-slate-700 font-black py-4 rounded-2xl hover:bg-slate-100 flex items-center justify-center gap-2 text-sm uppercase transition-all active:scale-95">
-            <Copy size={18} /> Copiar para WhatsApp
-          </button>
-          <button onClick={handlePrint} className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 flex items-center justify-center gap-2 text-sm uppercase transition-all active:scale-95">
-            <Printer size={18} /> Gerar PDF / Imprimir
+        {/* Footer Actions */}
+        <div className="p-6 bg-slate-50 border-t border-slate-200">
+          <button 
+            onClick={copyToClipboard} 
+            className="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 flex items-center justify-center gap-3 text-sm uppercase transition-all active:scale-95"
+          >
+            <Copy size={20} /> Copiar Relatório para WhatsApp
           </button>
         </div>
       </div>
