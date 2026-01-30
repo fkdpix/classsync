@@ -36,7 +36,7 @@ const App: React.FC = () => {
             setSyncStatus('synced');
             setLastSyncTime(format(new Date(), 'HH:mm:ss'));
           } else {
-            setSyncStatus('synced'); // Conectado, mas vazio
+            setSyncStatus('synced');
           }
         } catch (e) {
           setSyncStatus('error');
@@ -120,76 +120,68 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-200">
-      <nav className="bg-white border-b-2 border-slate-200 sticky top-0 z-50 shadow-sm">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-200 safe-area-padding">
+      <nav className="bg-white border-b-2 border-slate-200 sticky top-0 z-50 shadow-sm no-print">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div 
             className="flex items-center gap-3 cursor-pointer" 
             onClick={() => { setSelectedPlanId(null); setIsCreating(false); }}
           >
-            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl">
-              <CalendarRange size={24} />
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <CalendarRange size={20} />
             </div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tighter hidden sm:block">
+            <h1 className="text-xl font-black text-slate-900 tracking-tighter hidden xs:block">
               Class<span className="text-indigo-600">Sync</span>
             </h1>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="flex flex-col items-end">
               <button 
                 onClick={() => setIsSyncModalOpen(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all font-black text-[9px] uppercase tracking-widest ${
                   syncStatus === 'synced' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
                   syncStatus === 'syncing' ? 'bg-amber-50 border-amber-200 text-amber-700' :
                   syncStatus === 'error' ? 'bg-rose-50 border-rose-200 text-rose-700' :
                   'bg-slate-50 border-slate-200 text-slate-500'
                 }`}
               >
-                {syncStatus === 'syncing' ? <RefreshCw size={14} className="animate-spin" /> : 
-                 syncStatus === 'synced' ? <Check size={14} /> : 
-                 syncStatus === 'error' ? <AlertCircle size={14} /> : <Cloud size={14} />}
+                {syncStatus === 'syncing' ? <RefreshCw size={12} className="animate-spin" /> : 
+                 syncStatus === 'synced' ? <Check size={12} /> : 
+                 syncStatus === 'error' ? <AlertCircle size={12} /> : <Cloud size={12} />}
                 
-                <span className="hidden md:inline">{
-                  syncStatus === 'synced' ? 'Nuvem Ativa' :
-                  syncStatus === 'syncing' ? 'Salvando...' :
-                  syncStatus === 'error' ? 'Erro de Sync' : 'Ativar Nuvem'
+                <span className="hidden sm:inline">{
+                  syncStatus === 'synced' ? 'Nuvem OK' :
+                  syncStatus === 'syncing' ? 'Salvando' :
+                  syncStatus === 'error' ? 'Erro Sync' : 'Nuvem'
                 }</span>
               </button>
-              {lastSyncTime && (
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter mt-1 pr-1">
-                  Último Sync: {lastSyncTime}
-                </span>
-              )}
             </div>
 
             {(activePlan || isCreating) && (
               <button 
                 onClick={() => { setSelectedPlanId(null); setIsCreating(false); }}
-                className="flex items-center gap-2 text-[10px] font-black text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-widest border-2 border-slate-100 px-4 py-2 rounded-xl hover:bg-indigo-50"
+                className="flex items-center gap-2 text-[9px] font-black text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-widest border-2 border-slate-100 px-3 py-2 rounded-xl hover:bg-indigo-50"
               >
-                <ChevronLeft size={16} /> Voltar
+                <ChevronLeft size={14} /> <span className="hidden xs:inline">Voltar</span>
               </button>
             )}
           </div>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 py-12">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         {isCreating ? (
           <div className="animate-in fade-in duration-500">
             <PlanCreator onCreate={handleCreatePlan} />
           </div>
         ) : activePlan ? (
-          <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700">
-            <div className="flex items-center gap-4">
-              <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Painel do Aluno</h1>
-              <div className="h-1 flex-1 bg-slate-200 rounded-full"></div>
-            </div>
+          <div className="space-y-6 animate-in slide-in-from-bottom-6 duration-700">
             <PlanDashboard 
               plan={activePlan} 
               onUpdateHistory={handleUpdateHistory} 
               onUpdatePlan={handleUpdatePlan}
+              onDeletePlan={handleDeletePlan}
             />
           </div>
         ) : (
@@ -204,9 +196,9 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="max-w-7xl mx-auto px-4 py-12 mt-12 border-t-2 border-slate-200 text-center">
-        <p className="text-slate-900 text-xs font-black uppercase tracking-[0.2em] opacity-50">
-          © {new Date().getFullYear()} ClassSync. Dados protegidos localmente e na nuvem.
+      <footer className="max-w-7xl mx-auto px-4 py-8 mt-12 border-t-2 border-slate-200 text-center pb-12 no-print">
+        <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.2em]">
+          ClassSync v1.1 • PWA Ready
         </p>
       </footer>
 

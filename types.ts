@@ -18,6 +18,7 @@ export interface AttendanceRecord {
   date: string; // ISO format (yyyy-MM-dd)
   time: string; // Horário em que a aula estava agendada (HH:mm)
   status: 'attended' | 'cancelled' | 'pending';
+  extendsPlan?: boolean; // Se verdadeiro, estende o término (reposição). Se falso, aula é perdida.
   reason?: string; 
   note?: string;
 }
@@ -37,6 +38,7 @@ export interface PlanCalculations {
   currentEndDate: Date;
   totalPlannedClasses: number;
   totalCancelled: number;
+  totalCancelledExtending: number; // Faltas que prorrogaram o plano
   totalAttended: number;
   nextClassDate: Date | null;
 }
