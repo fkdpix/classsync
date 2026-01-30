@@ -1,5 +1,5 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+import { createClient } from '@supabase/supabase-js';
 import { Plan } from '../types';
 
 export interface SyncConfig {
@@ -27,8 +27,7 @@ export const createSyncClient = (config: SyncConfig) => {
 // Funções de Persistência
 export const pushToCloud = async (plans: Plan[], config: SyncConfig) => {
   const supabase = createSyncClient(config);
-  // Simplificação: Salvamos o estado inteiro em um único registro para facilitar o "Sync de Usuário Único"
-  // Em um sistema real multi-usuário, teríamos tabelas separadas.
+  // Simplificação: Salvamos o estado inteiro em um único registro
   const { error } = await supabase
     .from('class_sync_data')
     .upsert({ id: 'current_user_data', plans: plans }, { onConflict: 'id' });
@@ -44,6 +43,6 @@ export const pullFromCloud = async (config: SyncConfig): Promise<Plan[] | null> 
     .eq('id', 'current_user_data')
     .single();
   
-  if (error && error.code !== 'PGRST116') throw error; // Ignora erro de "não encontrado"
+  if (error && error.code !== 'PGRST116') throw error; 
   return data?.plans || null;
 };
