@@ -1,0 +1,5 @@
+{
+  "name": "Class Attendance & Plan Tracker",
+  "description": "A smart application for tracking student attendance and dynamically managing plan end dates based on cancellations and rescheduled classes.",
+  "requestFramePermissions": []
+}
