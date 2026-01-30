@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { Plan } from '../types';
+import { Plan, DayOfWeek } from '../types';
 import { calculatePlanMetrics } from '../utils/dateHelpers';
 import { User, Calendar, CheckCircle, Clock, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale/pt-BR';
 
 interface Props {
   plans: Plan[];
@@ -11,6 +12,16 @@ interface Props {
   onDelete: (id: string) => void;
   onAddClick: () => void;
 }
+
+const DAY_NAMES: Record<number, string> = {
+  [DayOfWeek.SUNDAY]: 'Dom',
+  [DayOfWeek.MONDAY]: 'Seg',
+  [DayOfWeek.TUESDAY]: 'Ter',
+  [DayOfWeek.WEDNESDAY]: 'Qua',
+  [DayOfWeek.THURSDAY]: 'Qui',
+  [DayOfWeek.FRIDAY]: 'Sex',
+  [DayOfWeek.SATURDAY]: 'Sáb',
+};
 
 const StudentList: React.FC<Props> = ({ plans, onSelect, onDelete, onAddClick }) => {
   return (
@@ -47,6 +58,10 @@ const StudentList: React.FC<Props> = ({ plans, onSelect, onDelete, onAddClick })
           {plans.map(plan => {
             const metrics = calculatePlanMetrics(plan);
             const progress = (metrics.totalAttended / (plan.totalContractedClasses || 1)) * 100;
+            
+            const scheduleSummary = plan.schedules
+              .map(s => `${DAY_NAMES[s.dayOfWeek]} ${s.time}`)
+              .join(', ');
 
             return (
               <div 
@@ -66,7 +81,15 @@ const StudentList: React.FC<Props> = ({ plans, onSelect, onDelete, onAddClick })
                     </button>
                   </div>
 
-                  <h3 className="text-xl font-black text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">{plan.studentName}</h3>
+                  <div className="mb-4">
+                    <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors">{plan.studentName}</h3>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-tighter">
+                        {scheduleSummary}
+                      </span>
+                    </div>
+                  </div>
+                  
                   <div className="flex items-center gap-2 text-slate-500 text-xs font-black uppercase tracking-widest mb-6">
                     <Calendar size={14} /> {plan.durationMonths} Meses
                   </div>
