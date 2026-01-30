@@ -17,10 +17,8 @@ const App: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<'local' | 'syncing' | 'synced' | 'error'>('local');
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
 
-  // Carregar dados iniciais (Local + Nuvem)
   useEffect(() => {
     const loadData = async () => {
-      // 1. Carregar local primeiro para rapidez
       const saved = localStorage.getItem('class_sync_plans');
       if (saved) {
         try {
@@ -28,7 +26,6 @@ const App: React.FC = () => {
         } catch (e) { console.error(e); }
       }
 
-      // 2. Se houver nuvem, tentar puxar e sobrescrever o local se houver algo novo
       const config = getSyncConfig();
       if (config) {
         setSyncStatus('syncing');
@@ -38,9 +35,10 @@ const App: React.FC = () => {
             setPlans(cloudPlans);
             setSyncStatus('synced');
             setLastSyncTime(format(new Date(), 'HH:mm:ss'));
+          } else {
+            setSyncStatus('synced'); // Conectado, mas vazio
           }
         } catch (e) {
-          console.error("Cloud pull error", e);
           setSyncStatus('error');
         }
       }
@@ -48,7 +46,6 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
-  // Salvar sempre que plans mudar (com Debounce para evitar excesso de requisições)
   useEffect(() => {
     localStorage.setItem('class_sync_plans', JSON.stringify(plans));
     
@@ -61,10 +58,10 @@ const App: React.FC = () => {
           setSyncStatus('synced');
           setLastSyncTime(format(new Date(), 'HH:mm:ss'));
         } catch (e) {
-          console.error("Cloud push error", e);
           setSyncStatus('error');
+          console.error("Sync error:", e);
         }
-      }, 1500); // 1.5 segundos de espera após parar de mexer
+      }, 1000); 
       return () => clearTimeout(timer);
     }
   }, [plans]);
@@ -114,9 +111,9 @@ const App: React.FC = () => {
       const cloudPlans = await pullFromCloud(config);
       if (cloudPlans) {
         setPlans(cloudPlans);
-        setSyncStatus('synced');
-        setLastSyncTime(format(new Date(), 'HH:mm:ss'));
       }
+      setSyncStatus('synced');
+      setLastSyncTime(format(new Date(), 'HH:mm:ss'));
     } catch (e) {
       setSyncStatus('error');
     }
