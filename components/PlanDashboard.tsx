@@ -25,7 +25,8 @@ import {
   RefreshCw,
   Ban,
   ArrowRight,
-  Edit2
+  Edit2,
+  TrendingUp
 } from 'lucide-react';
 import { Plan, AttendanceRecord, DayOfWeek, ClassSchedule } from '../types';
 import { calculatePlanMetrics, generateClassList, calculateMonthlyStats } from '../utils/dateHelpers';
@@ -329,18 +330,52 @@ const PlanDashboard: React.FC<Props> = ({ plan, onUpdateHistory, onUpdatePlan, o
           {/* Sidebar Statistics */}
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-300">
-              <h3 className="font-black text-slate-900 mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
-                <BarChart3 size={18} className="text-indigo-600" /> Presenças Mensais
+              <h3 className="font-black text-slate-900 mb-6 flex items-center gap-2 text-sm uppercase tracking-wider">
+                <TrendingUp size={18} className="text-indigo-600" /> Frequência Mensal
               </h3>
-              <div className="space-y-4">
-                {monthlyStats.map((stat, i) => (
-                  <div key={i} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <div className="text-sm font-black text-slate-900 capitalize">{stat.monthYear}</div>
-                    <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden border border-slate-300">
-                      <div className="h-full bg-emerald-600" style={{ width: `${(stat.attended / (stat.attended + stat.cancelled || 1)) * 100}%` }} />
+              <div className="space-y-6">
+                {monthlyStats.length === 0 && (
+                  <p className="text-[10px] text-slate-400 font-bold italic text-center py-4">Aguardando registros...</p>
+                )}
+                {monthlyStats.map((stat, i) => {
+                  const total = stat.attended + stat.cancelled;
+                  const attendanceRate = total > 0 ? (stat.attended / total) * 100 : 0;
+                  
+                  return (
+                    <div key={i} className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                      <div className="flex justify-between items-center">
+                        <div className="text-xs font-black text-slate-900 capitalize">{stat.monthYear}</div>
+                        <div className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                          {attendanceRate.toFixed(0)}% Taxa
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span className="text-[10px] font-black text-slate-500 uppercase">Presenças:</span>
+                          <span className="text-xs font-black text-slate-900">{stat.attended}</span>
+                        </div>
+                        <div className="flex items-center gap-2 justify-end">
+                          <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                          <span className="text-[10px] font-black text-slate-500 uppercase">Faltas:</span>
+                          <span className="text-xs font-black text-slate-900">{stat.cancelled}</span>
+                        </div>
+                      </div>
+
+                      <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden flex border border-slate-300">
+                        <div 
+                          className="h-full bg-emerald-500 transition-all" 
+                          style={{ width: `${(stat.attended / (total || 1)) * 100}%` }} 
+                        />
+                        <div 
+                          className="h-full bg-rose-500 transition-all" 
+                          style={{ width: `${(stat.cancelled / (total || 1)) * 100}%` }} 
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
