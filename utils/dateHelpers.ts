@@ -9,10 +9,8 @@ import {
   format, 
   endOfDay,
   parseISO,
-  // Fix: startOfToday might not be exported in some versions, using startOfDay as replacement
   startOfDay
 } from 'date-fns';
-// Fix: Import ptBR from specific subpath as required by the project environment
 import { ptBR } from 'date-fns/locale/pt-BR';
 import { Plan, DayOfWeek, AttendanceRecord, PlanCalculations, MonthlyStats } from '../types';
 
@@ -67,7 +65,6 @@ export const calculatePlanMetrics = (plan: Plan): PlanCalculations => {
   const theoreticalEndDate = endOfDay(addMonths(parseISO(plan.startDate), plan.durationMonths));
   const currentEndDate = classList.length > 0 ? classList[classList.length - 1] : theoreticalEndDate;
 
-  // Fix: Using startOfDay(new Date()) instead of startOfToday()
   const now = startOfDay(new Date());
   const nextClass = classList.find(d => {
     const isTodayOrFuture = isAfter(d, now) || isSameDay(d, now);
